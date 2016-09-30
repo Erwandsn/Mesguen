@@ -8,7 +8,7 @@
 		<?php
 		try
 		{
-			$bdd = new PDO ( "mysql:host=localhost;dbname=ppe_test" , "root" , ""  , array ( PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION ) );
+			$bdd = new PDO ( "mysql:host=localhost;dbname=mesguen" , "root" , ""  , array ( PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION ) );
 		}
 		catch ( Exception $e )
 		{

@@ -91,7 +91,7 @@ body
 #input_float input , #input_float select , #input_float textarea
 {
 	width: 100%;
-	border: 2px solid #32CD32;
+	border: 2px solid green;
 }
 
 #input_float input
@@ -130,7 +130,7 @@ body
 	position: fixed;
 	width: 100%;
 	color: white;
-	background-color: #32CD32;
+	background-color: green;
 	text-align: center;
 	margin-top: 0px;
 	font-size: 150%;
@@ -164,7 +164,7 @@ body
 
 #tableau_tournees td , #tableau_tournees th
 {
-	border: 1px solid #32CD32;
+	border: 1px solid green;
 	height: 35px;
 }
 
@@ -177,7 +177,7 @@ body
 .separateur_vertical
 {
 	position: fixed;
-	border: 3px solid #32CD32;
+	border: 3px solid green;
 	border-radius: 5px;
 	top: 10%;
 	left: 48%;
@@ -198,7 +198,7 @@ body
 h3
 {
 	color: white;
-	background-color: #32CD32;
+	background-color: green;
 	text-align: center;
 	margin-bottom: 10px;
 	margin-top: 0px;

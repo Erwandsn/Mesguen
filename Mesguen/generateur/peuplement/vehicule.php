@@ -14,10 +14,12 @@ function ajoutVehicule()
 
 	$requeteSeconde=$bdd->prepare( "INSERT INTO vehicule
 										(vehMat,
-										vehMarque)
+										vehMarque,
+										vehKmCompteur)
 									VALUES
 										(:vehMat,
-										:vehMarque)");
+										:vehMarque,
+										:vehKmCompteur)");
 
 	for($i=0; $i<100; $i++)
 	{
@@ -47,13 +49,15 @@ function ajoutVehicule()
 		$camion="Camion ";
 		echo $camion.=trim($camions[rand(0, sizeof($camions)-1)]);
 
+		echo $vehKmCompteur=rand(1,500000);
+
 		echo "<br />";
 
 		$requete->execute(array("vehMat"=>$immatriculation));
 
 		if($requete->fetch()==false)
 		{
-			$requeteSeconde->execute(array("vehMat"=>$immatriculation, "vehMarque"=>$camion));
+			$requeteSeconde->execute(array("vehMat"=>$immatriculation, "vehMarque"=>$camion, "vehKmCompteur"=>$vehKmCompteur));
 		}
 		else
 		{

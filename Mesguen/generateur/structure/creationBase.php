@@ -40,6 +40,7 @@ function creationTableVehicule()
 				(
 					vehMat VARCHAR(10) NOT NULL,
 					vehMarque VARCHAR(60) NOT NULL,
+					vehKmCompteur INT(11) NOT NULL,
 					CONSTRAINT pk_vehicule PRIMARY KEY(vehMat)
 				)engine=InnoDB default charset=utf8");
 }
@@ -103,7 +104,8 @@ function creationTableEtape()
 					etpRDV DATETIME NOT NULL,
 					etpRDVMin DATETIME NULL,
 					etpRDVMax DATETIME NULL,
-					etpDteHreArrivee DATETIME NULL,
+					etpHreArrivee DATETIME NULL,
+					etpHreFin DATETIME NULL,
 					etpCommentaire VARCHAR(255) NULL,
 					etpNbPalLiv TINYINT(4) NULL,
 					etpNbPalLivEur TINYINT(4) NULL,

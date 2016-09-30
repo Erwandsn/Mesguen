@@ -15,8 +15,21 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 					<p>Bonjour <?php echo $_SESSION['emplNom']." ".$_SESSION['emplPrenom']; ?></p>
 				</div>
 				<h1>Vos pages</h1>
-				<a href="AC11.php" id='orgat'>Organiser les tourn&eacutees</a>
-						<a href='AC11.php'><div class='lienimg'></div></a><img src='images/tournee.png' class='tournee'/>
+				<?php
+				if($_SESSION['emplCat']=='Exploitant')
+				{
+					?>
+					<a href="AC11.php" id='orgat'>Organiser les tourn&eacutees</a>
+					<a href='AC11.php'><div class='lienimg'></div></a><img src='images/tournee.png' class='tournee'/>
+					<?php
+				}
+				else
+				{
+					?>
+					<a href="" id='orgat'>Liste des tourn&eacutees</a>
+					<?php
+				}
+				?>
 				<a href="deco.php" id='deconnexion'>D&eacuteconnexion</a>
 			</div>
 		</body>

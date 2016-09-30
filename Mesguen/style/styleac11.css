@@ -75,7 +75,7 @@ th
 
 .tourneeFoncee td , .tourneeFoncee th
 {
-	background-color: #01C020;
+	background-color: #AADD6C;
 }
 
 .tourneeClaire td , .tourneeClaire th 
@@ -86,7 +86,7 @@ th
 h3
 {
 	color: white;
-	background-color: #00570F;
+	background-color: green;
 	text-align: center;
 	margin-bottom: 10px;
 	margin-top: 0px;

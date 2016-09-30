@@ -1,10 +1,15 @@
 <?php
 session_start();
 
-if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
+//Autorisation de regard par rapport au statut
+if($_SESSION['emplCat']=="Exploitant")
 {
+	//Fichier de connexion requis afin de pouvoir se connecter à la BDD
+	//MySql
 	require 'utilitaires/connection/connection_mysql.php';
-	mysql_set_charset("UTF8");
+	//Encodage des sorties de la BDD en utf8
+	//mysql_set_charset("UTF8");
+	$connexion->exec("SET CHARACTER SET utf8");
 
 	if(isset($_SESSION['trnNumInfo']))
 	{
@@ -19,7 +24,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 									tournee
 								WHERE
 									trnNum=".$trnNum;
-		mysql_query($sqlSupprimerTournee);
+		executeSQL($sqlSupprimerTournee);
 
 		echo "<meta http-equiv='refresh' content='0;url=AC11.php?message=<font color=green>Tournée supprimée</font>'>";
 	}
@@ -38,7 +43,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 					ORDER BY
 						trnNum
 					ASC";
-	$sqlTournees=mysql_query($sqlTournees);
+	$sqlTournees=tableSQL($sqlTournees);
 	?>
 	<!DOCTYPE html>
 	<html>
@@ -80,7 +85,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 					</th>
 				</tr>
 				<?php
-				while($donnees=mysql_fetch_array($sqlTournees, MYSQL_BOTH))
+				foreach($sqlTournees As $donnees)
 				{
 					if($couleur=="Foncee")
 					{
@@ -131,9 +136,9 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
                                             	etpRDV
                                             ASC";
 
-							if(compteSQL($connexion, $sqlMinEtape)!=0)
+							if(compteSQL($sqlMinEtape)!=0)
 							{
-								$sqlMinEtape=tableSQL($connexion, $sqlMinEtape);
+								$sqlMinEtape=tableSQL($sqlMinEtape);
 								echo $sqlMinEtape[0]['lieuNom']." ".$sqlMinEtape[0]['comNom'];
 							}
 							else
@@ -161,9 +166,9 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
                                             	etpRDV
                                             DESC";
 
-							if(compteSQL($connexion, $sqlMaxEtape)!=0)
+							if(compteSQL($sqlMaxEtape)!=0)
 							{
-								$sqlMaxEtape=tableSQL($connexion, $sqlMaxEtape);
+								$sqlMaxEtape=tableSQL($sqlMaxEtape);
 								echo $sqlMaxEtape[0]['lieuNom']." ".$sqlMaxEtape[0]['comNom'];
 							}
 							else
@@ -175,7 +180,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 						<td>
 							<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="POST">
 								<input name="trnNumSup" type="hidden" value="<?php echo $donnees['trnNum']; ?>"/>
-								<input name="suppr_bout_<?php echo $donnees['trnNum']; ?>" id="suppr_bout_<?php echo $donnees['trnNum']; ?>" class="suppr_form" type="submit"/>
+								<input name="suppr_bout_<?php echo $donnees['trnNum']; ?>" id="suppr_bout_<?php echo $donnees['trnNum']; ?>" class="suppr_form" type="submit" onclick="if(window.confirm('Voulez-vous vraiment supprimer ?')){return true;}else{return false;}"/>
 							</form>
 						</td>
 						<td>
@@ -184,6 +189,48 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 								<input name="modif_bout_<?php echo $donnees['trnNum']; ?>" id="modif_bout_<?php echo $donnees['trnNum']; ?>" class="modif_form" type="submit"/>
 							</form>
 						</td>
+						<script type="text/javascript">
+							function griser()
+							{
+								var now = new Date();
+								var annee=now.getFullYear();
+								var mois=now.getMonth()+1;
+								if(mois<10)
+								{
+									mois='0'+mois;
+								}
+								var jour=now.getDate();
+								if(jour<10)
+								{
+									jour='0'+jour;
+								}
+								var heure=now.getHours();
+								if(heure<10)
+								{
+									heure='0'+heure;
+								}
+								var minute=now.getMinutes();
+								if(minute<10)
+								{
+									minute='0'+minute;
+								}
+								var seconde=now.getSeconds();
+								if(seconde<10)
+								{
+									seconde='0'+seconde;
+								}
+								date=annee+'-'+mois+'-'+jour+' '+heure+':'+minute+':'+seconde;
+								if("<?php echo $donnees['trnDepChf']; ?>"<date)
+								{
+									document.getElementById('suppr_bout_<?php echo $donnees["trnNum"]; ?>').setAttribute('disabled', 'disabled');
+									document.getElementById('suppr_bout_<?php echo $donnees["trnNum"]; ?>').style.opacity=0.5;
+									document.getElementById('modif_bout_<?php echo $donnees["trnNum"]; ?>').setAttribute('disabled', 'disabled');
+									document.getElementById('modif_bout_<?php echo $donnees["trnNum"]; ?>').style.opacity=0.5;
+								}
+							}
+
+							griser();
+						</script>
 					</tr>
 					<?php
 				}

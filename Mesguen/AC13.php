@@ -1,10 +1,11 @@
 <?php
 session_start();
 
-if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
+if($_SESSION['emplCat']=="Exploitant")
 {
 	require 'utilitaires/connection/connection_mysql.php';
-	mysql_set_charset("UTF8");
+	//mysql_set_charset("UTF8");
+	$connexion->exec("SET CHARACTER SET utf8");
 
 	if(isset($_POST['maj']))
 	{
@@ -57,16 +58,16 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 			$_SESSION['trnNumInfo']=$trnNum;
 			$_SESSION['etpIdInfo']=$etpId;
 
-			$sqlUpdateEtape=mysql_query($sqlUpdateEtape);
+			$sqlUpdateEtape=executeSQL($sqlUpdateEtape);
 
-			if($sqlUpdateEtape)
+			/*if($sqlUpdateEtape)
 			{
 				echo "<meta http-equiv='refresh' content='0;url=AC13.php?message=<font color=green>Étape modifiée</font>'>";
 			}
 			else
 			{
 				echo "<meta http-equiv='refresh' content='0;url=AC13.php?message=<font color=red>Une erreur est survenue</font>'>";
-			}
+			}*/
 		}
 	}
 
@@ -118,11 +119,11 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 									".$etpRDVMin.",
 									".$etpRDVMax.",
 									'".$commentaire."')";
-			$sqlCreateEtape=mysql_query($sqlCreateEtape);
+			$sqlCreateEtape=executeSQL($sqlCreateEtape);
 			
-			if($sqlCreateEtape)
+			/*if($sqlCreateEtape)
 			{
-				$sqlEtapeId=   "SELECT
+				$sqlEtapeReq=   "SELECT
 									etpId
 								FROM
 									etape
@@ -133,71 +134,76 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 												etape
 											WHERE
 												trnNum=".$trnNum.")";
-				$sqlEtapeId=mysql_query($sqlEtapeId);
-				$sqlEtapeId=mysql_fetch_array($sqlEtapeId, MYSQL_BOTH);
+				$sqlEtapeId=tableSQL($sqlEtapeReq);
 				$_SESSION['etpIdInfo']=$sqlEtapeId['etpId'];
 				echo "<meta http-equiv='refresh' content='0;url=AC13.php?message=<font color=green>Étape ajoutée</font>'>";
 			}
 			else
 			{
 				echo "<meta http-equiv='refresh' content='0;url=AC13.php?message=<font color=green>Une erreur est survenue</font>'>";
-			}
+			}*/
 		}
 	}
+	?>
 
-	if((isset($_POST['trnNumInfo']) AND isset($_POST['etpIdInfo'])) OR (isset($_SESSION['trnNumInfo']) AND isset($_SESSION['etpIdInfo'])))
-	{
-		if(isset($_POST['trnNumInfo']) AND isset($_POST['etpIdInfo']))
-		{
-			$trnNum=$_POST['trnNumInfo'];
-			$etpId=$_POST['etpIdInfo'];
-		}
-		else
-		{
-			$trnNum=$_SESSION['trnNumInfo'];
-			$etpId=$_SESSION['etpIdInfo'];
-		}
 
-		$_SESSION['trnNumInfo']=$trnNum;
-		$_SESSION['etpIdInfo']=$etpId;
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="ISO-8859-1"/>
+			<title>Étape</title>
+			<link rel="stylesheet" type="text/css" href="style/styleac13.css"/>
+			<script type="text/javascript">
+				<?php require 'javascript/calendrier.js';
+				require 'javascript/controle.js'; ?>
+			</script>
+		</head>
+		<body>
+			<?php
+			if((isset($_POST['trnNumInfo']) AND isset($_POST['etpIdInfo'])) OR (isset($_SESSION['trnNumInfo']) AND isset($_SESSION['etpIdInfo'])))
+			{
+				if(isset($_POST['trnNumInfo']) AND isset($_POST['etpIdInfo']))
+				{
+					$trnNum=$_POST['trnNumInfo'];
+					$etpId=$_POST['etpIdInfo'];
+				}
+				else
+				{
+					$trnNum=$_SESSION['trnNumInfo'];
+					$etpId=$_SESSION['etpIdInfo'];
+				}
 
-		$sqlEtape= "SELECT
-						lieuId,
-						etpRDV,
-						etpRDVMax,
-						etpRDVMin,
-						etpCommentaire
-					FROM
-						etape
-					WHERE
-						trnNum=".$trnNum."
-						AND
-						etpId=".$etpId;
-		$sqlEtape=mysql_query($sqlEtape);
-		$sqlEtape=mysql_fetch_array($sqlEtape);
-		?>
+				$_SESSION['trnNumInfo']=$trnNum;
+				$_SESSION['etpIdInfo']=$etpId;
 
-		<!DOCTYPE html>
-		<html>
-			<head>
-				<meta charset="ISO-8859-1"/>
-				<title>Étape</title>
-				<link rel="stylesheet" type="text/css" href="style/styleac13.css"/>
-				<script type="text/javascript" src="javascript/javascript.js"></script>
-			</head>
-			<body>
-				<form action="AC13.php" method="POST">
+				$sqlEtape= "SELECT
+								lieuId,
+								etpRDV,
+								etpRDVMax,
+								etpRDVMin,
+								etpCommentaire
+							FROM
+								etape
+							WHERE
+								trnNum=".$trnNum."
+								AND
+								etpId=".$etpId;
+				$sqlEtape=tableSQL($sqlEtape);
+				$sqlEtape=$sqlEtape[0];
+				?>
+				<div id="erreur"></div>
+				<form action="AC13.php" method="POST" onSubmit="return isValidFormEtapeUpdate();">
 					<div class="ajouter">
 						<div class="titre">
 							<?php
 							?>
 							<p>
-								AC13-Organiser les tournées- Tournée <?php echo $trnNum." Étape ".$etpId;?>
+								AC13-Organiser les tournées - Tournée <?php echo $trnNum." Étape ".$etpId;?>
 							</p>
 						</div>
 						<div class="contenu">
-							<label class="lieu" for="lieu">Lieu</label>
-							<select required class="lieu" name="lieu">
+							<label class="lieu" for="lieu">Lieu <sup>(</sup>*<sup>)</sup>:</label>
+							<select required id="lieu" class="lieu" name="lieu">
 								<?php 
 								$sqlLieux= "SELECT
 												lieuId,
@@ -208,43 +214,43 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 												lieu
 											WHERE
 												commune.comid=lieu.comid";
-								$result=mysql_query($sqlLieux);
-
-								while($donnees=mysql_fetch_array($result, MYSQL_BOTH))
+								$result=executeSQL($sqlLieux);
+								$donnees=tableSQL($sqlLieux);
+								foreach($donnees as $donnee)
 								{
 									if($sqlEtape['lieuId']==$donnees['lieuId'])
 									{
-										echo "<option selected='true' value='".$donnees['lieuId']."'>".$donnees['lieuNom']." ".$donnees['comNom']."</option>";
+										echo "<option selected='true' value='".$donnee['lieuId']."'>".$donnee['lieuNom']." ".$donnee['comNom']."</option>";
 									}
 									else
 									{
-										echo "<option value='".$donnees['lieuId']."'>".$donnees['lieuNom']." ".$donnees['comNom']."</option>";
+										echo "<option value='".$donnee['lieuId']."'>".$donnee['lieuNom']." ".$donnee['comNom']."</option>";
 									}
 								}
 								?>
 							</select>
-							<label class='rdventre'>Rendez vous entre </label>
-							<input type='text' class='rdventre' id="etpRDVMin" name='etpRDVMin' value="<?php if(isset($sqlEtape['etpRDVMin'])) echo date("d/m/Y", strtotime($sqlEtape['etpRDVMin'])); ?>"/>
+							<label class='rdventre'>Rendez vous entre :</label>
+							<input type='text' class='rdventre' id="etpRDVMin" name='etpRDVMin' value="<?php if(isset($sqlEtape['etpRDVMin'])) echo date("d/m/Y", strtotime($sqlEtape['etpRDVMin'])); ?>" onKeyPress="return isDateKey(event);"/>
 							<div id="calendrierEtpRDVMin"></div>
 							<script type="text/javascript">
 								calInit("calendrierEtpRDVMin", "", "etpRDVMin", "jsCalendar", "day", "selectedDay");
 							</script>
-							<label class='et'>et</label>
-							<input type='text' class='et' name='etpRDVMax' id="etpRDVMax" value="<?php if(isset($sqlEtape['etpRDVMax'])) echo date("d/m/Y", strtotime($sqlEtape['etpRDVMax'])); ?>"/>
+							<label class='et'>et :</label>
+							<input type='text' class='et' name='etpRDVMax' id="etpRDVMax" value="<?php if(isset($sqlEtape['etpRDVMax'])) echo date("d/m/Y", strtotime($sqlEtape['etpRDVMax'])); ?>" onKeyPress="return isDateKey(event);"/>
 							<div id="calendrierEtpRDVMax"></div>
 							<script type="text/javascript">
 								calInit("calendrierEtpRDVMax", "", "etpRDVMax", "jsCalendar", "day", "selectedDay");
 							</script>
-							<label class='prisenchg'>Pris en charge le</label>
-							<input type='text' class='prisenchg' name='etpRDV' id="etpRDV" value="<?php echo date("d/m/Y", strtotime($sqlEtape['etpRDV'])); ?>"/>
+							<label class='prisenchg'>Pris en charge le <sup>(</sup>*<sup>)</sup>:</label>
+							<input type='text' class='prisenchg' name='etpRDV' id="etpRDV" value="<?php echo date("d/m/Y", strtotime($sqlEtape['etpRDV'])); ?>" onKeyPress="return isDateKey(event);"/>
 							<div id="calendrierEtpRDV"></div>
 							<script type="text/javascript">
 								calInit("calendrierEtpRDV", "", "etpRDV", "jsCalendar", "day", "selectedDay");
 							</script>
-							<label class='commentaire'>Commentaire</label>
+							<label class='commentaire'>Commentaire :</label>
 							<textarea class='commentaire' name='commentaire'><?php echo $sqlEtape['etpCommentaire']; ?></textarea>
-							<input type="hidden" name="trnNumInfo" value="<?php echo $trnNum; ?>"/>
-							<input type="hidden" name="etpIdInfo" value="<?php echo $etpId; ?>"/>
+							<input type="hidden" id="trnNumInfo" name="trnNumInfo" value="<?php echo $trnNum; ?>"/>
+							<input type="hidden" id="etpIdInfo" name="etpIdInfo" value="<?php echo $etpId; ?>"/>
 						</div>
 						<input class="global" id="valider" type="submit" value="Valider" name="maj"/>
 						<input class="global" id="retour" type="button" onClick="location='AC12.php'" value="Retour"/>
@@ -256,57 +262,51 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 					echo $_GET['message'];
 				}
 				?>
-			</body>
-		</html>
-		<?php
-	}
-	elseif(isset($_POST['trnNumInfo']) OR isset($_SESSION['trnNumInfo']))
-	{
-		if(isset($_POST['trnNumInfo']))
-		{
-			$trnNum=$_POST['trnNumInfo'];
-		}
-		else
-		{
-			$trnNum=$_SESSION['trnNumInfo'];
-		}
+				<?php
+			}
+			elseif(isset($_POST['trnNumInfo']) OR isset($_SESSION['trnNumInfo']))
+			{
+				if(isset($_POST['trnNumInfo']))
+				{
+					$trnNum=$_POST['trnNumInfo'];
+				}
+				else
+				{
+					$trnNum=$_SESSION['trnNumInfo'];
+				}
 
-		$sqlEtape= "SELECT
-						etpId
-					FROM
-						etape
-					WHERE
-						etpId=( SELECT
-									MAX(etpId)
-								FROM
-									etape
-								WHERE
-									trnNum=".$trnNum.")";
-		$sqlEtape=mysql_query($sqlEtape);
-		$sqlEtape=mysql_fetch_array($sqlEtape, MYSQL_BOTH);
-		$sqlEtapeId=$sqlEtape['etpId'];
-		$sqlEtapeId=$sqlEtapeId+1;
-		?>
-
-		<!DOCTYPE html>
-		<html>
-			<head>
-				<meta charset="ISO-8859-1"/>
-				<title>Étape</title>
-				<link rel="stylesheet" type="text/css" href="style/styleac13.css"/>
-				<script type="text/javascript" src="javascript/javascript.js"></script>
-			</head>
-			<body>
-				<form action="AC13.php" method="POST">
+				$sql= "SELECT
+								etpId
+							FROM
+								etape
+							WHERE
+								etpId=( SELECT
+											MAX(etpId)
+										FROM
+											etape
+										WHERE
+											trnNum=".$trnNum.")";
+				echo $sql;
+				$nbLigne=compteSQL($sql);
+				if ($nbLigne==0){
+					$sqlEtapeId=1;
+				}else{
+					$sqlEtape=tableSQL($sql);
+					$sqlEtapeId=$sqlEtape[0]['etpId'];
+					$sqlEtapeId=$sqlEtapeId+1;
+				}
+				?>
+				<div id="erreur"></div>
+				<form action="AC13.php" method="POST" onSubmit="return isValidFormEtapeCreate();">
 					<div class='ajouter'>
 						<div class='titre'>
 							<p>
-								AC13-Organiser les tournées- Tournée <?php echo $trnNum." Etape ".$sqlEtapeId;?>
+								AC13-Organiser les tournées - Tournée <?php echo $trnNum." Etape ".$sqlEtapeId;?>
 							</p>
 						</div>
 						<div class='contenu'>
-							<label class="lieu" for="lieu">Lieu</label>
-							<select required class="lieu" name="lieu">
+							<label class="lieu" for="lieu">Lieu <sup>(</sup>*<sup>)</sup>:</label>
+							<select required id="lieu" class="lieu" name="lieu">
 								<option selected value="NAN">Aucun lieu</option>
 								<?php 
 								$sqlLieu=  "SELECT
@@ -318,35 +318,34 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 												lieu
 											WHERE
 												commune.comid=lieu.comid";
-								$result=mysql_query($sqlLieu);
-
-								while($row=mysql_fetch_array($result, MYSQL_NUM))
-								{
-									echo "<option value='".$row[0]."'>".$row[1]." ".$row[2]."</option>";
+								//$result=executeSQL($sqlLieu);
+								$row=tableSQL($sqlLieu);
+								foreach ($row as $rows){
+									echo "<option value='".$rows[0]."'>".$rows[1]." ".$rows[2]."</option>";
 								}
 								?>
 							</select>
-							<label class='rdventre'>Rendez vous entre </label>
-							<input type='text' class='rdventre' name="etpRDVMin" id="etpRDVMin"/>
+							<label class='rdventre'>Rendez vous entre :</label>
+							<input type='text' class='rdventre' name="etpRDVMin" id="etpRDVMin" onKeyPress="return isDateKey(event);"/>
 							<div id="calendrierEtpRDVMin"></div>
 							<script type="text/javascript">
 								calInit("calendrierEtpRDVMin", "", "etpRDVMin", "jsCalendar", "day", "selectedDay");
 							</script>
-							<label class='et'>et</label>
-							<input type='text' class='et' name="etpRDVMax" id="etpRDVMax"/>
+							<label class='et'>et :</label>
+							<input type='text' class='et' name="etpRDVMax" id="etpRDVMax" onKeyPress="return isDateKey(event);"/>
 							<div id="calendrierEtpRDVMax"></div>
 							<script type="text/javascript">
 								calInit("calendrierEtpRDVMax", "", "etpRDVMax", "jsCalendar", "day", "selectedDay");
 							</script>
-							<label class='prisenchg'>Pris en charge le</label>
-							<input type='text' class='prisenchg' name="etpRDV" id="etpRDV" required/>
+							<label class='prisenchg'>Pris en charge le <sup>(</sup>*<sup>)</sup>:</label>
+							<input type='text' class='prisenchg' name="etpRDV" id="etpRDV" onKeyPress="return isDateKey(event);" required/>
 							<div id="calendrierEtpRDV"></div>
 							<script type="text/javascript">
 								calInit("calendrierEtpRDV", "", "etpRDV", "jsCalendar", "day", "selectedDay");
 							</script>
-							<label class='commentaire'>Commentaire</label>
+							<label class='commentaire'>Commentaire :</label>
 							<textarea class='commentaire' name='commentaire'></textarea>
-							<input type="hidden" name="trnNumInfo" value="<?php echo $trnNum; ?>"/>
+							<input type="hidden" id="trnNumInfo" name="trnNumInfo" value="<?php echo $trnNum; ?>"/>
 						</div>
 						<input class="global" id="valider" type="submit" value="Valider" name="creer"/>
 						<input class="global" id="retour" type="button" onClick="location='AC12.php'" value="Retour"/>
@@ -357,15 +356,11 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 				{
 					echo $_GET['message'];
 				}
-				?>
+			}
+			?>
 			</body>
 		</html>
 		<?php
-	}
-	else
-	{
-		header("location:AC12.php");
-	}
 }
 else
 {

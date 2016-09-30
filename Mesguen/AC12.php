@@ -1,10 +1,10 @@
 <?php
 session_start();
 
-if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
+if($_SESSION['emplCat']=="Exploitant")
 {
 	require 'utilitaires/connection/connection_mysql.php';
-	mysql_set_charset("UTF8");
+	//mysql_set_charset("UTF8");
 
 	if(isset($_POST['etpIdSup']) AND isset($_POST['trnNumSup']))
 	{
@@ -17,7 +17,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 								etpId=".$etpId."
 								AND
 								trnNum=".$trnNum;
-		mysql_query($sqlSupprimerEtape);
+		executeSQL($sqlSupprimerEtape);
 
 		$_SESSION['trnNumInfo']=$trnNum;
 
@@ -43,7 +43,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 						trnCommentaire='".$commentaire."'
 					WHERE
 						trnNum=".$trnNum;
-		mysql_query($sqlUpdate);
+		executeSQL($sqlUpdate);
 	}
 
 	if(isset($_POST['creer']))
@@ -65,7 +65,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 								chfId='".$chauffeur."'
 								AND
 								vehMat='".$vehicule."'";
-			if(compteSQL($connexion, $sqlControl)==0)
+			if(compteSQL($sqlControl)==0)
 			{
 				if(isset($_POST['commentaire']))
 				{
@@ -92,8 +92,8 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 									'".$chauffeur."',
 									'".$vehicule."')";
 				}
-				$result=mysql_query($sqlInsert);
-				$result=tableSQL($connexion, $sqlControl);
+				$result=executeSQL($sqlInsert);
+				$result=tableSQL($sqlControl);
 
 				$_SESSION['trnNumInfo']=$result[0]['trnNum'];
 
@@ -116,7 +116,12 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 			<meta charset="utf-8" />
 	        <title>Tournée</title>
 	        <link rel="stylesheet" type="text/css" href="style/styleorgat.css"/>
-	        <script type="text/javascript" src="javascript/javascript.js"></script>
+	        <script type="text/javascript">
+		        <?php
+		        require 'javascript/calendrier.js';
+		        require 'javascript/controle.js';
+		        ?>
+	        </script>
 		</head>
 		<body>
 			<?php
@@ -152,18 +157,18 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 									vehicule.vehMat=tournee.vehMat
 									AND
 									trnNum=".$trnNum;
-				$sqlTournee=tableSQL($connexion, $sqlTournee);
+				$sqlTournee=tableSQL($sqlTournee);
 				?>
 				<h3 id="header_Organiser_tournee">AC12 - Organiser les tournées - Liste des étapes de la tournée n° <?php echo $trnNum; ?></h3>
-				<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" id="form_tournee">
+				<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onSubmit="return isValidFormTourneeUpdate();" id="form_tournee">
 					<div id="label_float">
-						<label for="trnDepChf">Date :</label>
+						<label for="trnDepChf">Date <sup>(</sup>*<sup>)</sup>:</label>
 						<br/>
 						<br/>
-						<label class='chauffeur'>Chauffeur :</label>
+						<label class='chauffeur'>Chauffeur <sup>(</sup>*<sup>)</sup>:</label>
 						<br/>
 						<br/>
-						<label for="vehicule">Vehicule :</label>
+						<label for="vehicule">Vehicule <sup>(</sup>*<sup>)</sup>:</label>
 						<br/>
 						<br/>
 						<label for="trnDepChfHor">Pris en charge le :</label>
@@ -172,14 +177,14 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 						<label for="commentaire">Commentaire :</label>
 					</div>
 					<div id="input_float">
-						<input required name="trnDepChf" id="trnDepChf" type="text" value="<?php echo date("d/m/Y", strtotime($sqlTournee[0]['trnDepChf'])); ?>"/>
+						<input required name="trnDepChf" id="trnDepChf" type="text" value="<?php echo date("d/m/Y", strtotime($sqlTournee[0]['trnDepChf'])); ?>" onKeyPress="return isDateKey(event);"/>
 						<div id="calendrierTrnDepChf"></div>
 						<script type="text/javascript">
 							calInit("calendrierTrnDepChf", "", "trnDepChf", "jsCalendar", "day", "selectedDay");
 						</script>
 						<br/>
 						<div class="styled_select">
-							<select required name="chauffeur">
+							<select required id="chauffeur" name="chauffeur">
 								<?php
 								$sqlChauffeurs="SELECT
 													emplId,
@@ -191,9 +196,9 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 													emplNom,
 													emplPrenom
 												ASC";
-								$sqlChauffeurs=mysql_query($sqlChauffeurs);
+								$sqlChauffeurs=tableSQL($sqlChauffeurs);
 
-								while($donnees=mysql_fetch_array($sqlChauffeurs, MYSQL_BOTH))
+								foreach($sqlChauffeurs As $donnees)
 								{
 									if($sqlTournee[0]['chfId']==$donnees['emplId'])
 									{
@@ -213,7 +218,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 						</div>
 						<br />
 						<div class="styled_select">
-							<select required name="vehicule">
+							<select required id="vehicule" name="vehicule">
 								<?php
 								$sqlVehicules= "SELECT
 													vehMat
@@ -222,9 +227,9 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 												ORDER BY
 													vehMat
 												ASC";
-								$sqlVehicules=mysql_query($sqlVehicules);
+								$sqlVehicules=tableSQL($sqlVehicules);
 
-								while($donnees=mysql_fetch_array($sqlVehicules, MYSQL_BOTH))
+								foreach($sqlVehicules As $donnees)
 								{
 									if($sqlTournee[0]['vehMat']==$donnees['vehMat'])
 									{
@@ -249,9 +254,31 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 						<textarea name="commentaire" type="text"><?php echo $sqlTournee[0]['trnCommentaire']; ?></textarea>
 					</div>
 					<div id="valid_float">
-						<input name="trnNumInfo" type="hidden" value="<?php echo $trnNum; ?>"/>
+						<input required name="trnNumInfo" id="trnNumInfo" type="hidden" value="<?php echo $trnNum; ?>"/>
+						<div id="erreur"></div>
 						<input class="bouton_global" id="valider" name="maj" type="submit" value="Valider"/>
-						<input class="bouton_global" id="retour" type="button" onClick="location='AC11.php'" value="Retour"/>
+						<input class="bouton_global" id="retour" type="button" value="Retour" onClick="location='AC11.php'"/>
+						<script type="text/javascript">
+							function griser()
+							{
+								<?php
+								$nbEtapes= "SELECT
+												etpId
+											FROM
+												etape
+											WHERE
+												trnNum=".$trnNum;
+								$nbEtapes=compteSQL($nbEtapes);
+								?>
+								if(<?php echo $nbEtapes; ?>==0)
+								{
+									document.getElementById('retour').setAttribute('disabled', 'disabled');
+									document.getElementById('retour').style.opacity=0.5;
+								}
+							}
+
+							griser();
+						</script>
 					</div>
 				</form>
 				<div class="separateur_vertical">
@@ -276,7 +303,6 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 								ORDER BY
 									etpRDV
 								ASC";
-					$sqlEtapes=mysql_query($sqlEtapes);
 					?>
 					<table id="etapes_tournee">
 						<tr>
@@ -288,8 +314,9 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 							</th>
 						</tr>
 						<?php
+						$sqlEtapes=tableSQL($sqlEtapes);
 						$compteur=1;
-						while($donnees=mysql_fetch_array($sqlEtapes, MYSQL_BOTH))
+						foreach($sqlEtapes As $donnees)
 						{
 							?>
 							<tr>
@@ -307,7 +334,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 									<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="POST">
 										<input name="etpIdSup" type="hidden" value="<?php echo $donnees['etpId']; ?>"/>
 										<input name="trnNumSup" type="hidden" value="<?php echo $donnees['trnNum']; ?>"/>
-										<input name="suppr_bout_<?php echo $donnees['etpId']; ?>" id="suppr_bout_<?php echo $donnees['etpId']; ?>" class="suppr_form" type="submit"/>
+										<input name="suppr_bout_<?php echo $donnees['etpId']; ?>" id="suppr_bout_<?php echo $donnees['etpId']; ?>" class="suppr_form" type="submit" onclick="if(window.confirm('Voulez-vous vraiment supprimer ?')){return true;}else{return false;}"/>
 									</form>
 								</td>
 								<td>
@@ -342,24 +369,24 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 				{
 					?>
 					<div>
-					<h3>AC12 - Organiser les tournées - Ajouter une tournée</h3>
+					<h3>AC12 - Organiser les tournees - Ajouter une tournee</h3>
 					</div>
-					<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
+					<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onSubmit="return isValidFormTourneeCreate();">
 						<br/>
 						<div id="label_float">
-							<label for='chauffeur'>Chauffeur :</label>
+							<label for='chauffeur'>Chauffeur <sup>(</sup>*<sup>)</sup>:</label>
 							<br/>
 							<br/>
-							<label for="vehicule">Vehicule :</label>
+							<label for="vehicule">Vehicule <sup>(</sup>*<sup>)</sup>:</label>
 							<br/>
 							<br/>
-							<label for="trnDepChf">Pris en charge le :</label>
+							<label for="trnDepChf">Pris en charge le <sup>(</sup>*<sup>)</sup>:</label>
 							<br/>
 							<br/>
 							<label for="commentaire">Commentaire :</label>
 						</div>
 						<div id="input_float">
-							<select name='chauffeur'>
+							<select id="chauffeur" name='chauffeur'>
 								<option selected value="NAN">Aucun chauffeur</option>
 								<?php
 								$sqlChauffeur= "SELECT
@@ -370,8 +397,8 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 													employe
 												WHERE
 													emplcat='chauffeur'";
-								$result=mysql_query($sqlChauffeur);
-								while($row=mysql_fetch_array($result, MYSQL_NUM))
+								$sqlChauffeur=tableSQL($sqlChauffeur);
+								foreach($sqlChauffeur As $row)
 								{
 									echo "<option value='$row[0]'>".$row[1]." ".$row[2]."</option>";
 								}
@@ -379,15 +406,15 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 							</select>
 							<br/>
 							<br/>
-							<select name="vehicule">
+							<select id="vehicule" name="vehicule">
 								<option selected value="NAN">Aucun véhicule</option>
 								<?php
 								$sqlPlaque="SELECT
 												vehMat
 											FROM
 												vehicule";
-								$result=mysql_query($sqlPlaque);
-								while($row=mysql_fetch_array($result, MYSQL_NUM))
+								$sqlPlaque=tableSQL($sqlPlaque);
+								foreach($sqlPlaque As $row)
 								{
 									echo "<option value='".$row[0]."'>".$row[0]."</option>";
 								}
@@ -395,7 +422,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 							</select>
 							<br/>
 							<br/>
-							<input type="text" name="trnDepChf" id="trnDepChf" placeholder="JJ/MM/AAAA HH:MM:SS"/>
+							<input type="text" name="trnDepChf" id="trnDepChf" onKeyPress="return isDateKey(event);"/>
 							<div id="calendrierTrnDepChf"></div>
 							<script type="text/javascript">
 								calInit("calendrierTrnDepChf", "", "trnDepChf", "jsCalendar", "day", "selectedDay");
@@ -404,6 +431,7 @@ if($_SESSION['emplCat']=="Exploitant" OR $_SESSION['emplCat']=="Chauffeur")
 							<textarea name="commentaire"></textarea>
 						</div>
 						<div id="valid_float">
+							<div id="erreur"></div>
 							<input class="bouton_global" id="valider" type="submit" name="creer" value="Valider"/>
 							<input class="bouton_global" id="retour" type="button" onClick="location='AC11.php'" value="Retour"/>
 						</div>
